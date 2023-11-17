@@ -18,11 +18,11 @@ package app
 
 import (
 	"context"
-	"errors"
 	"fmt"
-	"io/ioutil"
 	"net"
+	"os"
 	"path"
+	"runtime"
 	"testing"
 	"time"
 
@@ -42,9 +42,14 @@ import (
 	"k8s.io/utils/ptr"
 )
 
+func skipForGOOS(t *testing.T, osName string) {
+	if runtime.GOOS == osName {
+		t.Skip()
+	}
+}
+
 // TestLoadConfig tests proper operation of loadConfig()
 func TestLoadConfig(t *testing.T) {
-
 	yamlTemplate := `apiVersion: kubeproxy.config.k8s.io/v1alpha1
 bindAddress: %s
 clientConnection:
@@ -386,6 +391,8 @@ func TestProcessHostnameOverrideFlag(t *testing.T) {
 // TestOptionsComplete checks that command line flags are combined with a
 // config properly.
 func TestOptionsComplete(t *testing.T) {
+	skipForGOOS(t, "windows")
+
 	header := `apiVersion: kubeproxy.config.k8s.io/v1alpha1
 kind: KubeProxyConfiguration
 `
@@ -492,7 +499,7 @@ kind: KubeProxyConfiguration
 			if len(tc.config) > 0 {
 				tmp := t.TempDir()
 				configFile := path.Join(tmp, "kube-proxy.conf")
-				require.NoError(t, ioutil.WriteFile(configFile, []byte(tc.config), 0666))
+				require.NoError(t, os.WriteFile(configFile, []byte(tc.config), 0666))
 				flags = append(flags, "--config", configFile)
 			}
 			require.NoError(t, fs.Parse(flags))
@@ -500,35 +507,6 @@ kind: KubeProxyConfiguration
 			assert.Equal(t, tc.expected, options.config)
 		})
 	}
-}
-
-type fakeProxyServerLongRun struct{}
-
-// Run runs the specified ProxyServer.
-func (s *fakeProxyServerLongRun) Run() error {
-	for {
-		time.Sleep(2 * time.Second)
-	}
-}
-
-// CleanupAndExit runs in the specified ProxyServer.
-func (s *fakeProxyServerLongRun) CleanupAndExit() error {
-	return nil
-}
-
-type fakeProxyServerError struct{}
-
-// Run runs the specified ProxyServer.
-func (s *fakeProxyServerError) Run() error {
-	for {
-		time.Sleep(2 * time.Second)
-		return fmt.Errorf("mocking error from ProxyServer.Run()")
-	}
-}
-
-// CleanupAndExit runs in the specified ProxyServer.
-func (s *fakeProxyServerError) CleanupAndExit() error {
-	return errors.New("mocking error from ProxyServer.CleanupAndExit()")
 }
 
 func TestAddressFromDeprecatedFlags(t *testing.T) {

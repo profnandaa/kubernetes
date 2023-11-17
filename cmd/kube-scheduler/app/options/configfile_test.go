@@ -54,7 +54,15 @@ kind: KubeSchedulerConfiguration
 `
 )
 
+func skipForGOOS(t *testing.T, osName string) {
+	if osName == "windows" {
+		t.Skip()
+	}
+}
+
 func TestLoadConfigFromFile(t *testing.T) {
+	skipForGOOS(t, "windows")
+
 	tmpDir, err := os.MkdirTemp("", "scheduler-configs")
 	if err != nil {
 		t.Fatal(err)

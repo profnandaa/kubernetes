@@ -24,6 +24,7 @@ import (
 	"io"
 	"os"
 	"path/filepath"
+	"runtime"
 	"testing"
 	"time"
 
@@ -272,7 +273,16 @@ func TestReadRotatedLog(t *testing.T) {
 			rotatedName := fmt.Sprintf("%s.%s", baseName, time.Now().Format("220060102-150405"))
 			rotatedName = filepath.Join(dir, rotatedName)
 			if err := os.Rename(filepath.Join(dir, baseName), rotatedName); err != nil {
-				assert.NoErrorf(t, err, "failed to rotate log %q to %q", file.Name(), rotatedName)
+				if runtime.GOOS == "windows" {
+					// since error message wording is different
+					// part of the error message:
+					errMsg := fmt.Sprintf(
+						"rename %s %s: The process cannot access the file because it is being used by another process.",
+						file.Name(), rotatedName)
+					assert.Contains(t, err.Error(), errMsg)
+				} else {
+					assert.NoErrorf(t, err, "failed to rotate log %q to %q", file.Name(), rotatedName)
+				}
 				return
 			}
 

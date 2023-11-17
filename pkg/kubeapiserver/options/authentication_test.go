@@ -40,6 +40,12 @@ import (
 	"k8s.io/utils/pointer"
 )
 
+func skipForGOOS(t *testing.T, osName string) {
+	if osName == "windows" {
+		t.Skip()
+	}
+}
+
 func TestAuthenticationValidate(t *testing.T) {
 	testCases := []struct {
 		name                         string
@@ -833,6 +839,8 @@ func TestValidateOIDCOptions(t *testing.T) {
 }
 
 func TestLoadAuthenticationConfig(t *testing.T) {
+	skipForGOOS(t, "windows")
+
 	testCases := []struct {
 		name           string
 		file           func() string

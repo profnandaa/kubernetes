@@ -34,6 +34,12 @@ import (
 	"k8s.io/kubernetes/cmd/kubeadm/app/constants"
 )
 
+func skipForGOOS(t *testing.T, osName string) {
+	if osName == "windows" {
+		t.Skip()
+	}
+}
+
 var testResetConfig = fmt.Sprintf(`apiVersion: %s
 kind: ResetConfiguration
 force: true
@@ -47,6 +53,8 @@ ignorePreflightErrors:
 `, kubeadmapiv1.SchemeGroupVersion.String())
 
 func TestNewResetData(t *testing.T) {
+	skipForGOOS(t, "windows")
+
 	// create temp directory
 	tmpDir, err := os.MkdirTemp("", "kubeadm-reset-test")
 	if err != nil {

@@ -20,12 +20,20 @@ import (
 	"bytes"
 	"os"
 	"path"
+	"runtime"
 	"strings"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
+
+func switchFileNotFoundError() string {
+	if runtime.GOOS == "windows" {
+		return "The system cannot find the file specified."
+	}
+	return "The system cannot find the file specified."
+}
 
 func TestGenerate(t *testing.T) {
 	for name, tt := range map[string]struct {
@@ -37,7 +45,7 @@ func TestGenerate(t *testing.T) {
 	}{
 		"missing-file": {
 			in:          `{{include "no-such-file.txt"}}`,
-			expectedErr: "open no-such-file.txt: no such file or directory",
+			expectedErr: switchFileNotFoundError(),
 		},
 		"data": {
 			in:       `{{.Hello}} {{.World}}`,
